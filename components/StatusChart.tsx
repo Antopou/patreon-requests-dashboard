@@ -29,13 +29,13 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 export default function StatusChart({ data }: Props) {
   // Container must have explicit dimensions for Recharts
   return (
-    <div className="flex flex-col rounded-3xl border border-white/50 bg-white/60 p-6 shadow-sm backdrop-blur-sm transition-all hover:shadow-md">
+    <div className="flex flex-col rounded-3xl border border-white/50 bg-white/60 p-6 shadow-sm backdrop-blur-sm transition-all hover:shadow-md min-w-0">
       <div className="mb-2">
         <h3 className="text-lg font-bold text-slate-800">Status Breakdown</h3>
       </div>
 
-      <div className="h-[300px] w-full relative">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-[300px] w-full min-w-0 relative">
+        <ResponsiveContainer width="100%" height="100%" minHeight={240} minWidth={240}>
           <PieChart>
             <Pie
               dataKey="value"

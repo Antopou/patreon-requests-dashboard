@@ -4,11 +4,15 @@ import RequestForm from "@/components/RequestForm";
 import { loadRequests, addNewRequest } from "@/lib/storage";
 import { RequestItem } from "@/types/request";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function NewRequestPage() {
     const router = useRouter();
-    const [items, setItems] = useState<RequestItem[]>(loadRequests());
+    const [items, setItems] = useState<RequestItem[]>([]);
+
+    useEffect(() => {
+        loadRequests().then(setItems);
+    }, []);
 
     async function add(item: RequestItem) {
         await addNewRequest(item);

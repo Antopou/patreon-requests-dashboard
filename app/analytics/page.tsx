@@ -11,7 +11,10 @@ export default function AnalyticsPage() {
     const [items, setItems] = useState<RequestItem[]>([]);
 
     useEffect(() => {
-        setItems(loadRequests());
+        (async () => {
+            const data = await loadRequests();
+            setItems(data);
+        })();
     }, []);
 
     /* 
