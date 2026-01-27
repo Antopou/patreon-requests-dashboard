@@ -24,7 +24,7 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
     characterName: "",
     origin: "",
     requestType: "Portrait" as (typeof TYPES)[number],
-    status: "Pending" as (typeof STATUS)[number],
+    status: "Not Started" as (typeof STATUS)[number],
     notes: "",
   });
   
@@ -102,7 +102,7 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
         characterName: "",
         origin: "",
         requestType: "Portrait",
-        status: "Pending",
+        status: "Not Started",
         notes: "",
       });
       
@@ -125,7 +125,7 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
       characterName: "",
       origin: "",
       requestType: "Portrait",
-      status: "Pending",
+      status: "Not Started",
       notes: "",
     });
     setErrors({});

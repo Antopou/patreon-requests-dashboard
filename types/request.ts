@@ -22,7 +22,8 @@ export type RequestItem = {
   daysSinceRequest?: number; // Days since request was made
 };
 
-export const STATUS: Status[] = ["Done", "Not Started", "In Progress", "Completed", "Cancelled"];
+// Align with sheet statuses
+export const STATUS: Status[] = ["Not Started", "In Progress", "Not Doing", "Waiting Feedback", "Done"];
 export const TIERS: Tier[] = ["Tier 1", "Tier 2", "Tier 3", "Tier 4"];
 export const TYPES: RequestType[] = ["Not Poll", "Poll"];
 // export const PRIORITIES: Priority[] = ["High", "Medium", "Normal", "Low"];

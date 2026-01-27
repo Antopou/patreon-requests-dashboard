@@ -46,27 +46,23 @@ function parseCSV(csvText: string): RequestItem[] {
   return lines.slice(1)
     .filter(line => line.trim() && !line.startsWith(','))
     .map(line => {
-      // Better CSV parser that handles quoted fields properly
       const values = [];
       let current = '';
       let inQuotes = false;
       let i = 0;
-      
+
       while (i < line.length) {
         const char = line[i];
-        
+
         if (char === '"') {
           if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-            // Escaped quote within quotes
             current += '"';
             i += 2;
           } else {
-            // Toggle quote state
             inQuotes = !inQuotes;
             i++;
           }
         } else if (char === ',' && !inQuotes) {
-          // Field separator
           values.push(current.trim());
           current = '';
           i++;
@@ -75,43 +71,36 @@ function parseCSV(csvText: string): RequestItem[] {
           i++;
         }
       }
-      values.push(current.trim()); // Add the last value
-      
-      // Clean up values (remove surrounding quotes)
+      values.push(current.trim());
+
       const cleanValues = values.map(v => {
         if (v.startsWith('"') && v.endsWith('"')) {
           return v.slice(1, -1);
         }
         return v;
       });
-      
-      // Skip rows that don't have enough columns or have empty patreon name
+
       if (cleanValues.length < 7 || !cleanValues[0]) {
-        console.log('Skipping malformed row:', cleanValues);
         return null;
       }
-      
-      // Debug: log the parsed values
-      console.log('Parsed values:', cleanValues);
-      
-      // Calculate days since request
+
       const requestDate = new Date(cleanValues[2]);
       const today = new Date();
       const daysSinceRequest = Math.floor((today.getTime() - requestDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       return {
         id: '',
-        patreonName: cleanValues[0] || '', // Patron Name
-        tier: cleanValues[1] as any, // Tier
-        characterName: cleanValues[3] || '', // Character Name (4th column)
-        origin: cleanValues[4] || '', // Anime / Origin
-        requestType: cleanValues[5] as any, // Type
-        status: cleanValues[6] as any, // Status
-        priority: 'Normal' as any, // Default priority (not in CSV)
-        dateRequested: cleanValues[2] || new Date().toISOString(), // Request Date (3rd column)
-        revisionCount: 0, // Default revision count (not in CSV)
-        notes: cleanValues[7] || '', // Notes (8th column)
-        daysSinceRequest: daysSinceRequest, // Add days since request
+        patreonName: cleanValues[0] || '',
+        tier: cleanValues[1] as any,
+        characterName: cleanValues[3] || '',
+        origin: cleanValues[4] || '',
+        requestType: cleanValues[5] as any,
+        status: cleanValues[6] as any,
+        priority: 'Normal' as any,
+        dateRequested: cleanValues[2] || new Date().toISOString(),
+        revisionCount: 0,
+        notes: cleanValues[7] || '',
+        daysSinceRequest: daysSinceRequest,
       };
     })
     .filter(item => item !== null); // Remove null rows
@@ -132,10 +121,8 @@ export async function GET() {
     }
     
     const csvText = await response.text();
-    console.log('Raw CSV data:', csvText.substring(0, 500)); // Log first 500 chars
-    
+
     const requests = parseCSV(csvText).map(normalizeRequest);
-    console.log('Parsed requests:', requests.slice(0, 2)); // Log first 2 requests
     
     return NextResponse.json(requests);
   } catch (error) {

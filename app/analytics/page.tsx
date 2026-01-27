@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { loadRequests } from "@/lib/storage";
 import { RequestItem } from "@/types/request";
 import StatusChart from "@/components/StatusChart";
-import TierChart from "@/components/TierChart";
+import WeeklyRequestsChart from "@/components/WeeklyRequestsChart";
 import KpiCard from "@/components/KpiCard";
 
 export default function AnalyticsPage() {
@@ -30,27 +30,70 @@ export default function AnalyticsPage() {
     }
 
     const total = items.length;
-    const completed = items.filter(i => i.status === "Completed").length;
-    const pending = items.filter(i => i.status === "Pending").length;
-    const inProgress = items.filter(i => i.status === "In Progress").length;
+    const done = items.filter(i => i.status === "Done").length;
+    
+    // Active Pipeline: haven't done yet, excluding "Not Doing"
+    const activePipeline = items.filter(i => 
+        i.status !== "Done" && i.status !== "Not Doing"
+    ).length;
+    
+    // Character Queue: Not Poll type with In Progress or Not Started
+    const characterQueue = items.filter(i => 
+        i.requestType === "Not Poll" && 
+        (i.status === "In Progress" || i.status === "Not Started")
+    ).length;
+    
+    // Polls Awaiting: Poll type with Waiting Feedback status
+    const pollsAwaiting = items.filter(i => 
+        i.requestType === "Poll" && 
+        i.status === "Waiting Feedback"
+    ).length;
 
     const statusData = getChartData("status");
-    const tierData = getChartData("tier");
+
+    // Build last 7 days (including today) request counts
+    const weeklyData = (() => {
+        const today = new Date();
+        const days: { name: string; value: number }[] = [];
+
+        const sameDay = (a: Date, b: Date) =>
+            a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+        for (let i = 6; i >= 0; i--) {
+            const target = new Date(today);
+            target.setHours(0, 0, 0, 0);
+            target.setDate(today.getDate() - i);
+
+            const label = target.toLocaleDateString(undefined, { weekday: "short" });
+
+            const value = items.reduce((count, item) => {
+                if (!item.dateRequested) return count;
+                const parsed = new Date(item.dateRequested);
+                if (isNaN(parsed.getTime())) return count;
+                parsed.setHours(0, 0, 0, 0);
+                return sameDay(parsed, target) ? count + 1 : count;
+            }, 0);
+
+            days.push({ name: label, value });
+        }
+        return days;
+    })();
 
     return (
         <div className="space-y-8 animate-fade-in">
             <h1 className="text-3xl font-bold text-slate-900">Analytics</h1>
 
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                 <KpiCard title="Total Requests" value={total} />
-                <KpiCard title="Completed" value={completed} />
-                <KpiCard title="In Progress" value={inProgress} />
-                <KpiCard title="Pending" value={pending} />
+                <KpiCard title="Done" value={done} />
+                <KpiCard title="Active Pipeline" value={activePipeline} />
+                <KpiCard title="Character Queue" value={characterQueue} />
+                <KpiCard title="Polls Awaiting" value={pollsAwaiting} />
             </div>
 
             <div className="grid gap-8 md:grid-cols-2">
                 <StatusChart data={statusData} />
-                <TierChart data={tierData} />
+                <WeeklyRequestsChart data={weeklyData} />
             </div>
         </div>
     );
