@@ -73,7 +73,9 @@ const RequestRow = memo(function RequestRow({ item, onUpdate }: { item: (Request
       {/* 4. Days Waiting */}
       <td className="px-4 py-4 text-center">
         <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-          item.daysSinceRequest && item.daysSinceRequest > 30 
+          item.status === 'Done'
+            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+            : item.daysSinceRequest && item.daysSinceRequest > 30 
             ? 'bg-red-50 text-red-700 border border-red-200'
             : item.daysSinceRequest && item.daysSinceRequest > 14
             ? 'bg-amber-50 text-amber-700 border border-amber-200'

@@ -8,7 +8,7 @@ import { RequestItem } from "@/types/request";
 import { IMPORTED_REQUESTS } from "@/lib/seedData";
 
 const STATUS_OPTIONS = ["Not Started", "In Progress", "Not Doing", "Waiting Feedback", "Done"];
-const TYPE_OPTIONS = ["Portrait", "Full Body", "Poll", "Not Poll"];
+const TYPE_OPTIONS = ["Poll", "Not Poll"];
 
 export default function DashboardPage() {
   const [items, setItems] = useState<RequestItem[]>([]);
