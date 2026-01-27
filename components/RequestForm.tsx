@@ -149,7 +149,7 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
                 className={`w-full rounded-xl border ${
                   errors.patreonName ? 'border-red-300' : 'border-slate-200'
                 } bg-white/50 px-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all`}
-                placeholder="Enter patron name"
+                placeholder="Enter patreon name"
                 value={formData.patreonName}
                 onChange={(e) => handleChange('patreonName', e.target.value)}
                 aria-invalid={!!errors.patreonName}

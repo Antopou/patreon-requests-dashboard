@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { IMPORTED_REQUESTS } from '@/lib/seedData';
 import { RequestItem } from '@/types/request';
+import { updateRequest as updateRequestInSheets, getRequests as getRequestsFromSheets } from '@/lib/sheets';
 
 const CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || '';
 
@@ -109,11 +110,22 @@ function parseCSV(csvText: string): RequestItem[] {
 // GET all requests
 export async function GET() {
   try {
+    // First try to get from Google Sheets API (no cache delays)
+    const sheetsRequests = await getRequestsFromSheets();
+    
+    if (sheetsRequests && sheetsRequests.length > 0) {
+      console.log(`Loaded ${sheetsRequests.length} requests from Google Sheets API`);
+      const normalized = sheetsRequests.map(normalizeRequest);
+      return NextResponse.json(normalized);
+    }
+
+    // Fallback to CSV if Sheets API fails
     if (!CSV_URL) {
       console.warn('GOOGLE_SHEETS_CSV_URL not configured - serving seed data');
       return respondWithSeedData();
     }
 
+    console.log('Sheets API failed, falling back to CSV export');
     const response = await fetch(CSV_URL, { cache: 'no-store' });
     
     if (!response.ok) {
@@ -121,7 +133,6 @@ export async function GET() {
     }
     
     const csvText = await response.text();
-
     const requests = parseCSV(csvText).map(normalizeRequest);
     
     return NextResponse.json(requests);
@@ -146,12 +157,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// PUT update a request (CSV is read-only for now)
+// PUT update a request
 export async function PUT(request: NextRequest) {
   try {
-    // For now, CSV is read-only
-    console.log('CSV is read-only - using localStorage for updates');
-    return NextResponse.json({ success: true });
+    const body = await request.json();
+    const { id, ...updates } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Request ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Try to update in Google Sheets first
+    const sheetsUpdated = await updateRequestInSheets(id, updates);
+    
+    if (sheetsUpdated) {
+      console.log('Request updated in Google Sheets:', id);
+      return NextResponse.json({ success: true, updated: 'sheets' });
+    }
+
+    // Fallback: just acknowledge (will be saved to localStorage client-side)
+    console.log('Update acknowledged (will sync to localStorage):', id);
+    return NextResponse.json({ success: true, updated: 'local' });
   } catch (error) {
     console.error('Error updating request:', error);
     return NextResponse.json(

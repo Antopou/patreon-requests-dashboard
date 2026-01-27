@@ -15,36 +15,36 @@ const auth = new google.auth.JWT({
 const sheets = google.sheets({ version: 'v4', auth });
 
 // Convert RequestItem to array for Google Sheets
-function requestItemToArray(item: RequestItem): string[] {
+function requestItemToArray(item: RequestItem): (string | number)[] {
   return [
-    item.id,
-    item.patreonName,
-    item.tier,
-    item.characterName,
-    item.origin || '',
-    item.requestType,
-    item.status,
-    item.priority.toString(),
-    item.dateRequested,
-    item.revisionCount.toString(),
-    item.notes || '',
+    item.patreonName, // Patreon (A)
+    item.tier, // Tier (B)
+    item.dateRequested, // Request Date (C)
+    item.characterName, // Character Name (D)
+    item.origin || '', // Anime / Origin (E)
+    item.requestType, // Type (F)
+    item.status, // Status (G)
+    item.notes || '', // Notes (H)
   ];
 }
 
 // Convert array from Google Sheets to RequestItem
-function arrayToRequestItem(row: string[]): RequestItem {
+function arrayToRequestItem(row: string[], index: number, headerOffset = 0): RequestItem {
+  // Sheet rows are 1-based; header offset accounts for header row present
+  const sheetRowNumber = index + 1 + headerOffset; // index 0 -> row 1 if no header, row 2 if header exists
+
   return {
-    id: row[0] || '',
-    patreonName: row[1] || '',
-    tier: row[2] as any,
-    characterName: row[3] || '',
-    origin: row[4] || '',
-    requestType: row[5] as any,
-    status: row[6] as any,
-    priority: parseInt(row[7]) || 1 as any,
-    dateRequested: row[8] || new Date().toISOString(),
-    revisionCount: parseInt(row[9]) || 0,
-    notes: row[10] || '',
+    id: `req-${sheetRowNumber}`,
+    patreonName: row[0] || '', // Patreon Name
+    tier: row[1] as any, // Tier
+    characterName: row[3] || '', // Character Name
+    origin: row[4] || '', // Anime / Origin
+    requestType: row[5] as any, // Type
+    status: row[6] as any, // Status
+    priority: 'Normal' as any, // Default priority (not in sheet)
+    dateRequested: row[2] || new Date().toISOString(), // Request Date
+    revisionCount: 0, // Default (not in sheet)
+    notes: row[7] || '', // Notes
   };
 }
 
@@ -58,31 +58,25 @@ export async function getRequests(): Promise<RequestItem[]> {
 
     console.log('Attempting to fetch from sheet:', SPREADSHEET_ID);
     
-    // First, let's try to get the sheet info to see what sheets are available
-    try {
-      const sheetInfo = await sheets.spreadsheets.get({
-        spreadsheetId: SPREADSHEET_ID,
-      });
-      console.log('Available sheets:', sheetInfo.data.sheets?.map(s => ({ 
-        name: s.properties?.title, 
-        id: s.properties?.sheetId 
-      })));
-    } catch (infoError) {
-      console.log('Could not get sheet info:', infoError);
-    }
+    // Get the correct sheet name
+    const sheetName = await getSheetName();
+    console.log('Using sheet name:', sheetName);
     
-    // Try to get data by sheet ID instead of name
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_ID}!A:K`, // Use sheet ID instead of name
+      range: `'${sheetName}'!A:K`,
     });
 
     const rows = response.data.values || [];
     
-    // Skip header row if exists
-    const dataRows = rows.length > 0 && rows[0][0] === 'id' ? rows.slice(1) : rows;
+    // Detect header row (column A starts with "Patreon" or "Patreon Name")
+    const hasHeader = rows.length > 0 && typeof rows[0][0] === 'string' && rows[0][0].toLowerCase().includes('patreon');
+
+    // Skip header row if present
+    const dataRows = hasHeader ? rows.slice(1) : rows;
+    const headerOffset = hasHeader ? 1 : 0;
     
-    return dataRows.map(arrayToRequestItem);
+    return dataRows.map((row, index) => arrayToRequestItem(row, index, headerOffset));
   } catch (error) {
     console.error('Error fetching requests from Google Sheets:', error);
     return [];
@@ -113,6 +107,20 @@ export async function addRequest(item: RequestItem): Promise<boolean> {
   }
 }
 
+// Get sheet metadata to find the correct sheet name
+async function getSheetName(): Promise<string> {
+  try {
+    const response = await sheets.spreadsheets.get({
+      spreadsheetId: SPREADSHEET_ID,
+    });
+    const sheetName = response.data.sheets?.[0]?.properties?.title || 'Character Request Tracker';
+    return sheetName;
+  } catch (error) {
+    console.error('Error getting sheet name, falling back to Character Request Tracker:', error);
+    return 'Character Request Tracker';
+  }
+}
+
 // Update an existing request in Google Sheets
 export async function updateRequest(id: string, updates: Partial<RequestItem>): Promise<boolean> {
   try {
@@ -121,29 +129,82 @@ export async function updateRequest(id: string, updates: Partial<RequestItem>): 
       return false;
     }
 
-    // First, get all requests to find the row index
-    const requests = await getRequests();
-    const rowIndex = requests.findIndex(r => r.id === id);
-    
-    if (rowIndex === -1) {
-      console.error('Request not found:', id);
+    // Get the correct sheet name
+    const sheetName = await getSheetName();
+
+    // Get all requests to find the row index
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `'${sheetName}'!A:K`,
+    });
+
+    const rows = response.data.values || [];
+    if (rows.length < 2) {
+      console.error('Sheet appears to be empty');
       return false;
     }
 
-    // Update the request
-    const updatedRequest = { ...requests[rowIndex], ...updates };
+    // Try multiple strategies to find the row
+    // Strategy 1: Match by ID in first column
+    let rowIndex = rows.findIndex((row, idx) => idx > 0 && row[0] === id);
     
-    // Update the row (add 2 for 0-index + header row)
-    const response = await sheets.spreadsheets.values.update({
+      // Strategy 2: If ID not found and starts with "req-", we encoded the sheet row number in the ID
+      // ID format: req-<sheetRowNumber>. rows[] is 0-based (includes header if present), so rowIndex = sheetRowNumber - 1.
+      if (rowIndex === -1 && id.startsWith('req-')) {
+        const sheetRowNumber = parseInt(id.replace('req-', ''));
+        if (!isNaN(sheetRowNumber) && sheetRowNumber >= 1) {
+          rowIndex = sheetRowNumber - 1;
+          console.log(`Using sheetRow mapping: ${id} -> rowIndex ${rowIndex} (sheet row ${sheetRowNumber})`);
+        }
+      }
+
+      if (rowIndex === -1 || rowIndex >= rows.length) {
+        console.error('Request not found:', id, 'rowIndex:', rowIndex, 'total rows:', rows.length);
+        return false;
+      }
+
+      console.log(`Updating row ${rowIndex} (sheet row ${rowIndex + 1}) for ID: ${id}`);
+
+    // Build the current full request by merging with existing data (columns A-H)
+    const existingRow = rows[rowIndex];
+    const currentRequest: RequestItem = {
+      id,
+      patreonName: existingRow[0] || '',       // Patreon Name (A)
+      tier: existingRow[1] as any,              // Tier (B)
+      dateRequested: existingRow[2] || new Date().toISOString(), // Request Date (C)
+      characterName: existingRow[3] || '',      // Character Name (D)
+      origin: existingRow[4] || '',             // Anime / Origin (E)
+      requestType: existingRow[5] as any,       // Type (F)
+      status: existingRow[6] as any,            // Status (G)
+      notes: existingRow[7] || '',              // Notes (H)
+      priority: 'Normal' as any,                // Not stored in sheet
+      revisionCount: 0,                         // Not stored in sheet
+    };
+
+    // Merge updates
+    const updatedRequest = { ...currentRequest, ...updates };
+
+    // Convert back to array and update
+    const updatedRow = requestItemToArray(updatedRequest);
+
+    const updateResponse = await sheets.spreadsheets.values.update({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'Character Request Tracker'!A${rowIndex + 2}:K${rowIndex + 2}`,
+      range: `'${sheetName}'!A${rowIndex + 1}:H${rowIndex + 1}`, // Only update columns we manage (A-H)
+
       valueInputOption: 'USER_ENTERED',
       requestBody: {
-        values: [requestItemToArray(updatedRequest)],
+        values: [updatedRow],
       },
     });
 
-    return response.status === 200;
+    console.log('Update response:', {
+      status: updateResponse.status,
+      statusText: updateResponse.statusText,
+      updatedCells: updateResponse.data.updatedCells,
+      updatedRows: updateResponse.data.updatedRows,
+    });
+
+    return updateResponse.status === 200;
   } catch (error) {
     console.error('Error updating request in Google Sheets:', error);
     return false;

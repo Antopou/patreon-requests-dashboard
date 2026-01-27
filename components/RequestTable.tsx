@@ -45,7 +45,7 @@ const RequestRow = memo(function RequestRow({ item, onUpdate }: { item: (Request
       className={`group transition-colors hover:bg-blue-50/30 whitespace-nowrap animate-fade-in-row`}
       style={{ animationDelay: '0ms' }}
     >
-      {/* 1. Patron Name */}
+      {/* 1. Patreon Name */}
       <td className="px-4 py-4 font-medium text-slate-900">
         <input
           className="w-full bg-transparent font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded-md -ml-2 px-2 py-1"
@@ -148,7 +148,7 @@ export default function RequestTable({ items, onUpdate, compact, isLoading = fal
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50/50 text-xs font-semibold uppercase text-slate-500 whitespace-nowrap">
             <tr>
-              <th className="px-4 py-4 min-w-[150px]">Patron Name</th>
+              <th className="px-4 py-4 min-w-[150px]">Patreon Name</th>
               <th className="px-4 py-4 w-[100px]">Tier</th>
               <th className="px-4 py-4 w-[120px]">Request Date</th>
               <th className="px-4 py-4 w-[100px]">Days Waiting</th>
