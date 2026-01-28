@@ -1,40 +1,72 @@
 "use client";
 
-import { useState } from "react";
-import { saveRequests } from "@/lib/storage";
+import { useState, useEffect } from "react";
 
 export default function SettingsPage() {
-    const [cleared, setCleared] = useState(false);
+    const [theme, setTheme] = useState("light");
 
-    function resetAll() {
-        if (!confirm("Clear all saved requests on this browser? This will NOT delete from Excel unless you click Save.")) return;
-        saveRequests([]);
-        setCleared(true);
-        setTimeout(() => setCleared(false), 3000);
+    useEffect(() => {
+        const saved = localStorage.getItem("theme-preference");
+        if (saved) setTheme(saved);
+    }, []);
+
+    function changeTheme(newTheme: string) {
+        setTheme(newTheme);
+        localStorage.setItem("theme-preference", newTheme);
+        
+        const html = document.documentElement;
+        // Force remove dark class first
+        html.classList.remove("dark");
+        
+        // Then add if needed
+        if (newTheme === "dark") {
+            html.classList.add("dark");
+        }
+        
+        html.style.colorScheme = newTheme;
     }
 
     return (
-        <div className="mx-auto max-w-2xl animate-fade-in">
+        <div className="mx-auto max-w-2xl animate-fade-in space-y-6">
             <h1 className="mb-8 text-3xl font-bold text-slate-900">Settings</h1>
 
+            {/* Appearance */}
             <div className="rounded-2xl border border-white/50 bg-white/60 p-8 shadow-sm backdrop-blur-md">
-                <h2 className="mb-4 text-xl font-semibold text-slate-800">Data Management</h2>
-                <p className="mb-6 text-slate-600">
-                    Sync status is local to this browser. Clearing data here will remove it from your local storage but will not affect the original Excel file unless you've overwritten it.
-                </p>
+                <h2 className="mb-4 text-xl font-semibold text-slate-800">Appearance</h2>
+                <div className="space-y-3">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="radio"
+                            name="theme"
+                            value="light"
+                            checked={theme === "light"}
+                            onChange={(e) => changeTheme(e.target.value)}
+                            className="w-4 h-4"
+                        />
+                        <span className="text-slate-700">Light Theme</span>
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="radio"
+                            name="theme"
+                            value="dark"
+                            checked={theme === "dark"}
+                            onChange={(e) => changeTheme(e.target.value)}
+                            className="w-4 h-4"
+                        />
+                        <span className="text-slate-700">Dark Theme</span>
+                    </label>
+                </div>
+            </div>
 
-                <button
-                    onClick={resetAll}
-                    className="rounded-xl border border-red-200 bg-red-50 px-6 py-3 font-medium text-red-600 hover:bg-red-100 hover:text-red-700 active:scale-95 transition-all"
-                >
-                    Reset All Data
-                </button>
-
-                {cleared && (
-                    <p className="mt-4 text-sm font-medium text-green-600 animate-slide-up">
-                        Data cleared successfully.
-                    </p>
-                )}
+            {/* About */}
+            <div className="rounded-2xl border border-white/50 bg-white/60 p-8 shadow-sm backdrop-blur-md">
+                <h2 className="mb-4 text-xl font-semibold text-slate-800">About</h2>
+                <div className="space-y-2 text-sm text-slate-600">
+                    <p><span className="font-medium text-slate-900">App Version:</span> 1.0.0</p>
+                    <p><span className="font-medium text-slate-900">Last Updated:</span> January 28, 2026</p>
+                    <p className="text-xs pt-2">Built with Next.js, TypeScript, and Tailwind CSS</p>
+                </div>
             </div>
         </div>
     );

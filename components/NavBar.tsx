@@ -8,13 +8,14 @@ export default function NavBar() {
 
     const links = [
         { href: "/", label: "Dashboard" },
-        { href: "/requests/new", label: "New Request" },
+        { href: "/requests/new", label: "Requests" },
+        { href: "/ai-tools", label: "AI Tools" },
         { href: "/analytics", label: "Analytics" },
         { href: "/settings", label: "Settings" },
     ];
 
     return (
-        <nav className="mb-8 flex items-center rounded-2xl border border-white/50 bg-white/60 px-6 py-4 shadow-sm backdrop-blur-md">
+        <nav className="mb-8 flex items-center justify-between rounded-2xl border border-white/50 bg-white/60 px-6 py-4 shadow-sm backdrop-blur-md relative z-50">
             <div className="flex items-center gap-1 bg-slate-100/50 p-1 rounded-xl">
                 {links.map((link) => {
                     const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));

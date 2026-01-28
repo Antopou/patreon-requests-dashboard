@@ -21,7 +21,7 @@ export default function NewRequestPage() {
 
     return (
         <div className="mx-auto max-w-3xl animate-fade-in p-4">
-            <h1 className="mb-6 text-2xl font-bold text-slate-800">New Request</h1>
+            <h1 className="mb-6 text-2xl font-bold text-slate-800">Request</h1>
             <RequestForm onAdd={add} />
         </div>
     );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import RequestForm from '@/components/RequestForm';
 import RequestTable from "@/components/RequestTable";
 import MultiSelect from "@/components/MultiSelect";
 import { loadRequests, updateExistingRequest } from "@/lib/storage";

@@ -9,11 +9,13 @@ import KpiCard from "@/components/KpiCard";
 
 export default function AnalyticsPage() {
     const [items, setItems] = useState<RequestItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         (async () => {
             const data = await loadRequests();
             setItems(data);
+            setIsLoading(false);
         })();
     }, []);
 
@@ -83,18 +85,39 @@ export default function AnalyticsPage() {
         <div className="space-y-8 animate-fade-in">
             <h1 className="text-3xl font-bold text-slate-900">Analytics</h1>
 
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-                <KpiCard title="Total Requests" value={total} />
-                <KpiCard title="Done" value={done} />
-                <KpiCard title="Active Pipeline" value={activePipeline} />
-                <KpiCard title="Character Queue" value={characterQueue} />
-                <KpiCard title="Polls Awaiting" value={pollsAwaiting} />
-            </div>
+            {isLoading ? (
+                <>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className="animate-pulse rounded-2xl border border-white/50 bg-white/60 p-4 shadow-sm backdrop-blur-sm">
+                                <div className="h-4 w-24 rounded bg-slate-200 mb-2"></div>
+                                <div className="h-8 w-16 rounded bg-slate-200"></div>
+                            </div>
+                        ))}
+                    </div>
 
-            <div className="grid gap-8 md:grid-cols-2">
-                <StatusChart data={statusData} />
-                <WeeklyRequestsChart data={weeklyData} />
-            </div>
+                    <div className="grid gap-8 md:grid-cols-2">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                            <div key={i} className="animate-pulse rounded-3xl border border-white/50 bg-white/60 p-6 shadow-sm backdrop-blur-sm h-72"></div>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+                        <KpiCard title="Total Requests" value={total} />
+                        <KpiCard title="Done" value={done} />
+                        <KpiCard title="Active Pipeline" value={activePipeline} />
+                        <KpiCard title="Character Queue" value={characterQueue} />
+                        <KpiCard title="Polls Awaiting" value={pollsAwaiting} />
+                    </div>
+
+                    <div className="grid gap-8 md:grid-cols-2">
+                        <StatusChart data={statusData} />
+                        <WeeklyRequestsChart data={weeklyData} />
+                    </div>
+                </>
+            )}
         </div>
     );
 }

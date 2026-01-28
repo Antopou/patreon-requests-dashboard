@@ -20,7 +20,7 @@ type Props = {
 export default function RequestForm({ onAdd, className = "" }: Props) {
   const [formData, setFormData] = useState({
     patreonName: "",
-    tier: "Basic" as (typeof TIERS)[number],
+    tier: "Tier 4" as (typeof TIERS)[number],
     characterName: "",
     origin: "",
     requestType: "Portrait" as (typeof TYPES)[number],
