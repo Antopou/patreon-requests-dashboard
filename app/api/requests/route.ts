@@ -114,7 +114,7 @@ export async function GET() {
     const sheetsRequests = await getRequestsFromSheets();
     
     if (sheetsRequests && sheetsRequests.length > 0) {
-      console.log(`Loaded ${sheetsRequests.length} requests from Google Sheets API`);
+      // console.log(`Loaded ${sheetsRequests.length} requests from Google Sheets API`);
       const normalized = sheetsRequests.map(normalizeRequest);
       return NextResponse.json(normalized);
     }
@@ -125,7 +125,7 @@ export async function GET() {
       return respondWithSeedData();
     }
 
-    console.log('Sheets API failed, falling back to CSV export');
+    // console.log('Sheets API failed, falling back to CSV export');
     const response = await fetch(CSV_URL, { cache: 'no-store' });
     
     if (!response.ok) {
@@ -146,7 +146,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     // For now, CSV is read-only. We'll just return success and use localStorage
-    console.log('CSV is read-only - using localStorage for new requests');
+    // console.log('CSV is read-only - using localStorage for new requests');
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error adding request:', error);
@@ -174,12 +174,12 @@ export async function PUT(request: NextRequest) {
     const sheetsUpdated = await updateRequestInSheets(id, updates);
     
     if (sheetsUpdated) {
-      console.log('Request updated in Google Sheets:', id);
+      // console.log('Request updated in Google Sheets:', id);
       return NextResponse.json({ success: true, updated: 'sheets' });
     }
 
     // Fallback: just acknowledge (will be saved to localStorage client-side)
-    console.log('Update acknowledged (will sync to localStorage):', id);
+    // console.log('Update acknowledged (will sync to localStorage):', id);
     return NextResponse.json({ success: true, updated: 'local' });
   } catch (error) {
     console.error('Error updating request:', error);

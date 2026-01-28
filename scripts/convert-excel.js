@@ -31,7 +31,7 @@ try {
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rawData = XLSX.utils.sheet_to_json(sheet);
 
-    console.log(`Found ${rawData.length} rows.`);
+    // console.log(`Found ${rawData.length} rows.`);
 
     const items = rawData
         .filter(row => row['Patreon Name'] && row['Patreon Name'] !== 'Patreon Name') // Filter empty or header rows
@@ -59,7 +59,7 @@ export const IMPORTED_REQUESTS: RequestItem[] = ${JSON.stringify(items, null, 2)
 `;
 
     fs.writeFileSync(OUTPUT_FILE, fileContent);
-    console.log(`Successfully wrote ${items.length} items to ${OUTPUT_FILE}`);
+    // console.log(`Successfully wrote ${items.length} items to ${OUTPUT_FILE}`);
 
 } catch (error) {
     console.error('Error converting file:', error);

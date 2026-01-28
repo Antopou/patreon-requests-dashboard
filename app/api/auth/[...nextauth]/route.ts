@@ -16,7 +16,7 @@ declare module 'next-auth/jwt' {
 }
 
 const handler = NextAuth({
-  debug: true, // Enable debug mode
+  // debug: true, // Debug mode disabled
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

@@ -28,10 +28,8 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                // Force light mode by removing any dark class
                 document.documentElement.classList.remove('dark');
                 document.documentElement.style.colorScheme = 'light';
-                // Only add dark if user explicitly saved it
                 const theme = localStorage.getItem('theme-preference');
                 if (theme === 'dark') {
                   document.documentElement.classList.add('dark');
@@ -42,18 +40,17 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
-        <Providers>
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-            <NavBar />
-            <main className="container mx-auto px-4 py-8">
-              {children}
-            </main>
-            <div className="fixed bottom-4 right-4 z-50">
-              <Toaster />
+      <body>
+        <div className={inter.className}>
+          <Providers>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+              <NavBar />
+              <main className="container mx-auto px-4 py-8">
+                {children}
+              </main>
             </div>
-          </div>
-        </Providers>
+          </Providers>
+        </div>
       </body>
     </html>
   );

@@ -56,11 +56,11 @@ export async function getRequests(): Promise<RequestItem[]> {
       return [];
     }
 
-    console.log('Attempting to fetch from sheet:', SPREADSHEET_ID);
+    // ...existing code...
     
     // Get the correct sheet name
     const sheetName = await getSheetName();
-    console.log('Using sheet name:', sheetName);
+    // console.log('Using sheet name:', sheetName);
     
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -154,7 +154,7 @@ export async function updateRequest(id: string, updates: Partial<RequestItem>): 
         const sheetRowNumber = parseInt(id.replace('req-', ''));
         if (!isNaN(sheetRowNumber) && sheetRowNumber >= 1) {
           rowIndex = sheetRowNumber - 1;
-          console.log(`Using sheetRow mapping: ${id} -> rowIndex ${rowIndex} (sheet row ${sheetRowNumber})`);
+          // console.log(`Using sheetRow mapping: ${id} -> rowIndex ${rowIndex} (sheet row ${sheetRowNumber})`);
         }
       }
 
@@ -163,7 +163,7 @@ export async function updateRequest(id: string, updates: Partial<RequestItem>): 
         return false;
       }
 
-      console.log(`Updating row ${rowIndex} (sheet row ${rowIndex + 1}) for ID: ${id}`);
+      // console.log(`Updating row ${rowIndex} (sheet row ${rowIndex + 1}) for ID: ${id}`);
 
     // Build the current full request by merging with existing data (columns A-H)
     const existingRow = rows[rowIndex];
