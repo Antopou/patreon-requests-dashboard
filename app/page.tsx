@@ -1,7 +1,6 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import RequestForm from '@/components/RequestForm';
 import RequestTable from "@/components/RequestTable";
 import MultiSelect from "@/components/MultiSelect";
 import { loadRequests, updateExistingRequest } from "@/lib/storage";
@@ -14,145 +13,121 @@ const TYPE_OPTIONS = ["Poll", "Not Poll"];
 export default function DashboardPage() {
   const [items, setItems] = useState<RequestItem[]>([]);
   const [q, setQ] = useState("");
-  // Default to active character requests
   const [statusFilter, setStatusFilter] = useState<string[]>(["Not Started", "In Progress"]);
   const [typeFilter, setTypeFilter] = useState<string[]>(["Not Poll"]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const deferredQuery = useDeferredValue(q);
 
   useEffect(() => {
     let cancelled = false;
-
-    const schedule = (cb: () => void) => {
-      // Give the browser breathing room when adding many rows
-      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-        (window as any).requestIdleCallback(cb, { timeout: 200 });
-      } else {
-        setTimeout(cb, 16);
-      }
-    };
-
     const loadData = async () => {
       setIsLoading(true);
-      setItems([]);
-      setLoadedCount(0);
-
       const data = await loadRequests();
       if (cancelled) return;
-
-      const source = data.length > 0 ? data : IMPORTED_REQUESTS;
+      const source = data && data.length > 0 ? data : IMPORTED_REQUESTS;
       setTotalCount(source.length);
-
-      if (source.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Load rows in small batches for better performance
-      const BATCH_SIZE = 5;
+      
       let index = 0;
-
-      const pushBatch = () => {
+      const batchSize = 15;
+      const batch = () => {
         if (cancelled) return;
         if (index < source.length) {
-          const batch = source.slice(index, index + BATCH_SIZE);
-          setItems(prev => [...prev, ...batch]);
-          index += BATCH_SIZE;
+          const nextSet = source.slice(index, index + batchSize);
+          setItems(prev => [...prev, ...nextSet]);
+          index += batchSize;
           setLoadedCount(Math.min(index, source.length));
-          schedule(pushBatch);
-        } else {
-          setIsLoading(false);
+          setTimeout(batch, 20);
+        } else { 
+          setIsLoading(false); 
         }
       };
-
-      schedule(pushBatch);
+      batch();
     };
-
     loadData();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const filtered = useMemo(() => {
-    let base = items;
+    const base = items || [];
+    let result = [...base];
 
-    if (statusFilter.length > 0) {
-      base = base.filter(i => i?.status && statusFilter.includes(i.status));
-    }
-
-    if (typeFilter.length > 0) {
-      base = base.filter(i => i?.requestType && typeFilter.includes(i.requestType));
-    }
-
-    const query = deferredQuery.trim().toLowerCase();
+    if (statusFilter.length > 0) result = result.filter(i => statusFilter.includes(i.status));
+    if (typeFilter.length > 0) result = result.filter(i => typeFilter.includes(i.requestType));
+    
+    const query = deferredQuery.toLowerCase().trim();
     if (query) {
-      base = base.filter(r =>
-        r?.patreonName?.toLowerCase().includes(query) ||
-        r?.characterName?.toLowerCase().includes(query)
+      result = result.filter(r => 
+        (r.patreonName || "").toLowerCase().includes(query) || 
+        (r.characterName || "").toLowerCase().includes(query)
       );
     }
 
-    const statusOrder = { "In Progress": 0, "Waiting Feedback": 1, "Not Started": 2, "Not Doing": 3, "Done": 4 } as const;
-
-    return base
-      .slice()
-      .sort((a, b) => {
-        const sa = statusOrder[a.status as keyof typeof statusOrder] ?? 99;
-        const sb = statusOrder[b.status as keyof typeof statusOrder] ?? 99;
-        if (sa !== sb) return sa - sb;
-        return new Date(a.dateRequested).getTime() - new Date(b.dateRequested).getTime();
-      });
+    const order = { "In Progress": 0, "Waiting Feedback": 1, "Not Started": 2, "Not Doing": 3, "Done": 4 } as any;
+    return result.sort((a, b) => 
+      (order[a.status] ?? 9) - (order[b.status] ?? 9) || 
+      new Date(a.dateRequested).getTime() - new Date(b.dateRequested).getTime()
+    );
   }, [items, deferredQuery, statusFilter, typeFilter]);
 
   async function update(id: string, patch: Partial<RequestItem>) {
-    const updated = items.map(i => i.id === id ? { ...i, ...patch } : i);
-    setItems(updated);
+    setItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i));
     await updateExistingRequest(id, patch);
   }
 
   return (
-    <div className="grid gap-6 animate-fade-in relative z-10">
-      <div className="flex flex-col gap-4 rounded-3xl border border-white/50 bg-white/60 p-6 shadow-sm backdrop-blur-sm md:flex-row md:items-center md:justify-between relative z-20">
-        <div className="relative flex-1">
-          <svg className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          </svg>
-          <input
-            className="w-full rounded-xl border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-            placeholder="Search by Patreon or Character..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
+    <div className="w-full max-w-full overflow-x-hidden px-2 md:px-6 py-3 md:py-8 space-y-3">
+      
+      {/* Container logic: Column on mobile, Row on desktop */}
+      <div className="flex flex-col md:flex-row md:items-center gap-2 rounded-2xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm relative z-20">
+        
+        <div className="flex items-center gap-2 flex-1 w-full">
+          <div className="relative flex-1">
+            <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              placeholder="Search..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+
+          <button 
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className={`md:hidden flex items-center justify-center p-2 h-9 w-9 rounded-xl border transition-all ${
+              showMobileFilters ? 'bg-blue-500 border-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border-slate-200 text-slate-400'
+            }`}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <MultiSelect
-            label="Status"
-            options={STATUS_OPTIONS}
-            value={statusFilter}
-            onChange={setStatusFilter}
-          />
-          <MultiSelect
-            label="Type"
-            options={TYPE_OPTIONS}
-            value={typeFilter}
-            onChange={setTypeFilter}
-          />
+        {/* FIX: Changed flex-row to flex-col on mobile 
+            to prevent filters from overlapping or going out of line.
+        */}
+        <div className={`${showMobileFilters ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-2 pt-2 md:pt-0 border-t border-slate-100 md:border-none w-full md:w-auto`}>
+          <div className="w-full md:w-[160px]">
+            <MultiSelect label="Status" options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
+          </div>
+          <div className="w-full md:w-[160px]">
+            <MultiSelect label="Type" options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} />
+          </div>
         </div>
       </div>
 
-      <div className="relative z-0">
+      <div className="w-full">
         <RequestTable
-          items={filtered as any}
+          items={filtered}
           onUpdate={update}
           isLoading={isLoading}
           loadedCount={loadedCount}
           totalCount={totalCount}
-          waitForFullLoad={false}
         />
       </div>
     </div>

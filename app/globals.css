@@ -78,6 +78,23 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Responsive filter controls for mobile */
+@media (max-width: 600px) {
+  .filter-container {
+    padding: 6px !important;
+    gap: 6px !important;
+  }
+  .filter-container select,
+  .filter-container input {
+    font-size: 12px !important;
+    padding: 4px 6px !important;
+    min-height: 28px !important;
+  }
+  .filter-container label {
+    font-size: 10px !important;
+  }
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
