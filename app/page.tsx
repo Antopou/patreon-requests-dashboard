@@ -80,7 +80,6 @@ export default function DashboardPage() {
   return (
     <div className="w-full max-w-full overflow-x-hidden px-2 md:px-6 py-3 md:py-8 space-y-3">
       
-      {/* Container logic: Column on mobile, Row on desktop */}
       <div className="flex flex-col md:flex-row md:items-center gap-2 rounded-2xl border border-white/50 bg-white/60 p-3 shadow-sm backdrop-blur-sm relative z-20">
         
         <div className="flex items-center gap-2 flex-1 w-full">
@@ -99,7 +98,7 @@ export default function DashboardPage() {
           <button 
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className={`md:hidden flex items-center justify-center p-2 h-9 w-9 rounded-xl border transition-all ${
-              showMobileFilters ? 'bg-blue-500 border-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-white border-slate-200 text-slate-400'
+              showMobileFilters ? 'bg-blue-500 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-400'
             }`}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,14 +107,12 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* FIX: Changed flex-row to flex-col on mobile 
-            to prevent filters from overlapping or going out of line.
-        */}
-        <div className={`${showMobileFilters ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-2 pt-2 md:pt-0 border-t border-slate-100 md:border-none w-full md:w-auto`}>
-          <div className="w-full md:w-[160px]">
+        {/* Changed flex-col back to flex-row and removed w-full to make them compact */}
+        <div className={`${showMobileFilters ? 'flex' : 'hidden'} md:flex flex-row flex-wrap gap-2 pt-2 md:pt-0 border-t border-slate-100 md:border-none`}>
+          <div className="w-auto">
             <MultiSelect label="Status" options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
           </div>
-          <div className="w-full md:w-[160px]">
+          <div className="w-auto">
             <MultiSelect label="Type" options={TYPE_OPTIONS} value={typeFilter} onChange={setTypeFilter} />
           </div>
         </div>
