@@ -1,7 +1,8 @@
 "use client";
 
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { RequestItem, STATUS, TIERS, TYPES } from "@/types/request";
+import { FiMessageSquare } from "react-icons/fi";
 
 type Props = {
   items: (RequestItem & { daysWaiting?: number; overdue?: boolean })[];
@@ -45,6 +46,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 const RequestRow = memo(function RequestRow({ item, onUpdate }: { item: (RequestItem & { daysWaiting?: number; overdue?: boolean }); onUpdate: (id: string, patch: Partial<RequestItem>) => void; }) {
   const { id } = item;
+  const [showNotes, setShowNotes] = useState(false);
 
   const updateField = useCallback((patch: Partial<RequestItem>) => {
     onUpdate(id, patch);
@@ -129,6 +131,44 @@ const RequestRow = memo(function RequestRow({ item, onUpdate }: { item: (Request
           {STATUS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </td>
+
+      <td className="px-4 py-4 text-center relative">
+        {item.notes && item.notes.trim() ? (
+          <>
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className="text-blue-500 hover:text-blue-700 transition-colors relative z-10"
+              title="View notes"
+            >
+              <FiMessageSquare className="h-5 w-5" />
+            </button>
+            {showNotes && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[9998]" 
+                  onClick={() => setShowNotes(false)}
+                />
+                <div className="fixed z-[9999] right-4 top-1/2 -translate-y-1/2 w-80 max-w-[90vw] p-4 bg-white border border-slate-300 rounded-xl shadow-2xl">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">Notes</span>
+                    <button 
+                      onClick={() => setShowNotes(false)}
+                      className="text-slate-400 hover:text-slate-700 transition-colors -mt-1 -mr-1 p-1"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">{item.notes}</p>
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <span className="text-slate-300">—</span>
+        )}
+      </td>
     </tr>
   );
 }, (prev, next) => prev.item === next.item && prev.onUpdate === next.onUpdate);
@@ -162,12 +202,13 @@ export default function RequestTable({
               <th className="px-4 py-4 min-w-[150px]">Anime / Origin</th>
               <th className="px-4 py-4 w-[120px]">Type</th>
               <th className="px-4 py-4 w-[150px]">Status</th>
+              <th className="px-4 py-4 w-[80px] text-center">Notes</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {showSkeleton ? skeletonRows.map((_, idx) => (
               <tr key={`skeleton-${idx}`} className="animate-pulse">
-                {Array.from({ length: 8 }).map((_, i) => (
+                {Array.from({ length: 9 }).map((_, i) => (
                   <td key={i} className="px-4 py-4"><div className="h-5 bg-slate-200 rounded w-full" /></td>
                 ))}
               </tr>
@@ -175,7 +216,7 @@ export default function RequestTable({
               <RequestRow key={r.id} item={r} onUpdate={stableUpdate} />
             )) : (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">No requests found.</td>
+                <td colSpan={9} className="px-4 py-8 text-center text-slate-500">No requests found.</td>
               </tr>
             )}
           </tbody>

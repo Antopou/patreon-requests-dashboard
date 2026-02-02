@@ -142,12 +142,29 @@ export async function GET() {
   }
 }
 
-// POST a new request (CSV is read-only for now)
+// POST a new request
 export async function POST(request: NextRequest) {
   try {
-    // For now, CSV is read-only. We'll just return success and use localStorage
-    // console.log('CSV is read-only - using localStorage for new requests');
-    return NextResponse.json({ success: true });
+    const body = await request.json();
+    const newRequest = body as RequestItem;
+
+    if (!newRequest.patreonName || !newRequest.characterName) {
+      return NextResponse.json(
+        { error: 'Patreon name and character name are required' },
+        { status: 400 }
+      );
+    }
+
+    // Try to add to Google Sheets API first
+    const { addRequest: addRequestToSheets } = await import('@/lib/sheets');
+    const sheetsAdded = await addRequestToSheets(newRequest);
+    
+    if (sheetsAdded) {
+      return NextResponse.json({ success: true, added: 'sheets' });
+    }
+
+    // Fallback: just acknowledge (will be saved to localStorage client-side)
+    return NextResponse.json({ success: true, added: 'local' });
   } catch (error) {
     console.error('Error adding request:', error);
     return NextResponse.json(

@@ -91,9 +91,12 @@ export async function addRequest(item: RequestItem): Promise<boolean> {
       return false;
     }
 
+    // Get the correct sheet name
+    const sheetName = await getSheetName();
+
     const response = await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'Character Request Tracker'!A:K`,
+      range: `'${sheetName}'!A:K`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [requestItemToArray(item)],

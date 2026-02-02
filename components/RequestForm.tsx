@@ -18,13 +18,16 @@ type Props = {
 };
 
 export default function RequestForm({ onAdd, className = "" }: Props) {
+  const getTodayDate = () => new Date().toISOString().split('T')[0];
+  
   const [formData, setFormData] = useState({
     patreonName: "",
     tier: "Tier 4" as (typeof TIERS)[number],
     characterName: "",
     origin: "",
-    requestType: "Portrait" as (typeof TYPES)[number],
+    requestType: "Not Poll" as (typeof TYPES)[number],
     status: "Not Started" as (typeof STATUS)[number],
+    dateRequested: getTodayDate(),
     notes: "",
   });
   
@@ -88,7 +91,7 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
         requestType: formData.requestType,
         status: formData.status,
         priority,
-        dateRequested: new Date().toISOString(),
+        dateRequested: new Date(formData.dateRequested).toISOString(),
         revisionCount: 0,
         notes: formData.notes,
       };
@@ -98,11 +101,12 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
       // Reset form
       setFormData({
         patreonName: "",
-        tier: "Basic",
+        tier: "Tier 4",
         characterName: "",
         origin: "",
-        requestType: "Portrait",
+        requestType: "Not Poll",
         status: "Not Started",
+        dateRequested: getTodayDate(),
         notes: "",
       });
       
@@ -121,11 +125,12 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
   const resetForm = () => {
     setFormData({
       patreonName: "",
-      tier: "Basic",
+      tier: "Tier 4",
       characterName: "",
       origin: "",
-      requestType: "Portrait",
+      requestType: "Not Poll",
       status: "Not Started",
+      dateRequested: getTodayDate(),
       notes: "",
     });
     setErrors({});
@@ -168,6 +173,46 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
             )}
           </div>
 
+          {/* Tier */}
+          <div className="space-y-1">
+            <label htmlFor="tier" className="text-xs font-semibold uppercase text-slate-500 ml-1">
+              Tier
+            </label>
+            <div className="relative">
+              <select
+                id="tier"
+                className="w-full rounded-xl border border-slate-200 bg-white/50 px-4 py-2.5 text-sm font-medium text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
+                value={formData.tier}
+                onChange={(e) => handleChange('tier', e.target.value)}
+              >
+                {TIERS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Request Date */}
+          <div className="space-y-1">
+            <label htmlFor="dateRequested" className="text-xs font-semibold uppercase text-slate-500 ml-1">
+              Request Date
+            </label>
+            <input
+              id="dateRequested"
+              type="date"
+              className="w-full rounded-xl border border-slate-200 bg-white/50 px-4 py-2.5 text-sm font-medium text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
+              value={formData.dateRequested}
+              onChange={(e) => handleChange('dateRequested', e.target.value)}
+            />
+          </div>
+
           {/* Character Name */}
           <div className="space-y-1">
             <label htmlFor="characterName" className="text-xs font-semibold uppercase text-slate-500 ml-1 flex items-center">
@@ -198,44 +243,18 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
             )}
           </div>
 
-          {/* Origin */}
+          {/* Anime / Origin */}
           <div className="space-y-1">
             <label htmlFor="origin" className="text-xs font-semibold uppercase text-slate-500 ml-1">
-              Origin (Optional)
+              Anime / Origin
             </label>
             <input
               id="origin"
               className="w-full rounded-xl border border-slate-200 bg-white/50 px-4 py-2.5 text-sm font-medium text-slate-800 placeholder:text-slate-300 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all"
-              placeholder="Enter origin (optional)"
+              placeholder="Enter anime or origin"
               value={formData.origin}
               onChange={(e) => handleChange('origin', e.target.value)}
             />
-          </div>
-
-          {/* Tier */}
-          <div className="space-y-1">
-            <label htmlFor="tier" className="text-xs font-semibold uppercase text-slate-500 ml-1">
-              Tier
-            </label>
-            <div className="relative">
-              <select
-                id="tier"
-                className="w-full rounded-xl border border-slate-200 bg-white/50 px-4 py-2.5 text-sm font-medium text-slate-800 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all appearance-none"
-                value={formData.tier}
-                onChange={(e) => handleChange('tier', e.target.value)}
-              >
-                {TIERS.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
-            </div>
           </div>
 
           {/* Request Type */}
@@ -285,28 +304,6 @@ export default function RequestForm({ onAdd, className = "" }: Props) {
               <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Priority (readonly) */}
-          <div className="space-y-1">
-            <label className="text-xs font-semibold uppercase text-slate-500 ml-1">
-              Priority
-            </label>
-            <div className="relative">
-              <input
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-500 focus:outline-none cursor-not-allowed"
-                value={priority}
-                readOnly
-                aria-label="Priority (automatically calculated based on tier)"
-              />
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="16" x2="12" y2="12"></line>
-                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
               </div>
             </div>
