@@ -40,17 +40,15 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
-        <div className={inter.className}>
-          <Providers>
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-              <NavBar />
-              <main className="container mx-auto px-4 py-8">
-                {children}
-              </main>
-            </div>
-          </Providers>
-        </div>
+      <body className={inter.className} suppressHydrationWarning>
+        <Providers>
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+            <NavBar />
+            <main className="container mx-auto px-4 py-8">
+              {children}
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

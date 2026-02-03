@@ -19,9 +19,11 @@
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
     "recharts": "^3.7.0",
-    "xlsx": "^0.18.5"
+    "exceljs": "^4.4.0",
+    "tailwindcss": "^4.0.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

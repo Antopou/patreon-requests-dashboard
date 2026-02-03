@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import path from 'path';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { RequestItem } from '@/types/request';
 
 const EXCEL_FILE = 'Character Request Tracker - redesigned.xlsx';
@@ -32,13 +32,19 @@ export async function POST(request: Request) {
     }));
 
     // Create a new workbook
-    const worksheet = XLSX.utils.json_to_sheet(rows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Requests");
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Requests');
+    
+    // Add headers
+    const headers = Object.keys(rows[0] || {});
+    worksheet.columns = headers.map(header => ({ header, key: header, width: 15 }));
+    
+    // Add rows
+    rows.forEach(row => worksheet.addRow(row));
 
     // Write to file
     try {
-      XLSX.writeFile(workbook, filePath);
+      await workbook.xlsx.writeFile(filePath);
     } catch (writeErr: any) {
       console.error('Write error:', writeErr);
       if (writeErr.code === 'EBUSY' || writeErr.message.includes('permission') || writeErr.message.includes('cannot save')) {

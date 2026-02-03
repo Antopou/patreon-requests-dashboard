@@ -187,7 +187,7 @@ export default function RequestTable({
   const stableUpdate = useCallback(onUpdate, [onUpdate]);
 
   return (
-    <div className="rounded-3xl border border-white/50 bg-white/60 shadow-sm backdrop-blur-sm transition-all hover:shadow-md overflow-hidden w-full max-w-full">
+    <div suppressHydrationWarning className="rounded-3xl border border-white/50 bg-white/60 shadow-sm backdrop-blur-sm transition-all hover:shadow-md overflow-hidden w-full max-w-full">
       
       {/* DESKTOP VIEW */}
       <div className="hidden md:block overflow-x-auto">
