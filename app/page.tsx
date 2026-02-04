@@ -14,7 +14,7 @@ export default function DashboardPage() {
   const [items, setItems] = useState<RequestItem[]>([]);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string[]>(["Not Started", "In Progress"]);
-  const [typeFilter, setTypeFilter] = useState<string[]>(["Not Poll"]);
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [loadedCount, setLoadedCount] = useState(0);

@@ -82,7 +82,7 @@ const RequestRow = memo(function RequestRow({ item, onUpdate }: { item: (Request
       <td className="px-4 py-4 text-center">
         {/* KEPT YOUR ORIGINAL COLOR LOGIC */}
         <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
-          item.status === 'Done'
+          item.status === 'Done' || item.status === 'Not Doing'
             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
             : item.daysSinceRequest && item.daysSinceRequest > 30 
             ? 'bg-red-50 text-red-700 border border-red-200'
@@ -132,7 +132,7 @@ const RequestRow = memo(function RequestRow({ item, onUpdate }: { item: (Request
         </select>
       </td>
 
-      <td className="px-4 py-4 text-center relative">
+      <td className="hidden lg:table-cell px-4 py-4 text-center relative">
         {item.notes && item.notes.trim() ? (
           <>
             <button
@@ -202,7 +202,7 @@ export default function RequestTable({
               <th className="px-4 py-4 min-w-[150px]">Anime / Origin</th>
               <th className="px-4 py-4 w-[120px]">Type</th>
               <th className="px-4 py-4 w-[150px]">Status</th>
-              <th className="px-4 py-4 w-[80px] text-center">Notes</th>
+              <th className="hidden lg:table-cell px-4 py-4 w-[80px] text-center">Notes</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

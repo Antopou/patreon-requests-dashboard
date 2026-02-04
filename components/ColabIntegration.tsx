@@ -398,7 +398,7 @@ export default function ColabIntegration() {
                       // Reset feedback color after 2 seconds
                       setTimeout(() => setCopiedModelKey(null), 2000);
                       // Close dropdown after 0.3 seconds
-                      setTimeout(() => setShowModels(false), 300);
+                      // setTimeout(() => setShowModels(false), 300);
                       try {
                         await navigator.clipboard.writeText(model.url);
                       } catch (err) {
