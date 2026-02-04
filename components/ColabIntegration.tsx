@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signIn } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 interface Account {
@@ -13,13 +13,19 @@ interface Account {
 
 export default function ColabIntegration() {
   const { data: session, status } = useSession();
-  const [selectedNotebook, setSelectedNotebook] = useState('dataset-maker');
+  const [selectedNotebook, setSelectedNotebook] = useState('fast-sd-automatic1111');
   const [savedAccounts, setSavedAccounts] = useState<Account[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [showIdTester, setShowIdTester] = useState(false);
   const [testingAccount, setTestingAccount] = useState<Account | null>(null);
   const [currentTestId, setCurrentTestId] = useState(0);
   const [showHelper, setShowHelper] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('wai-160');
+  const [showAddModel, setShowAddModel] = useState(false);
+  const [newModelUrl, setNewModelUrl] = useState('');
+  const [showModels, setShowModels] = useState(false);
+  const [copiedModelKey, setCopiedModelKey] = useState<string | null>(null);
+  const modelsDropdownRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // Load saved accounts from localStorage on component mount
@@ -36,6 +42,21 @@ export default function ColabIntegration() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (!showModels) return;
+
+    const handleScroll = (event: Event) => {
+      const target = event.target as Node | null;
+      if (modelsDropdownRef.current && target && modelsDropdownRef.current.contains(target)) {
+        return;
+      }
+      setShowModels(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, [showModels]);
 
   // Auto-add current session account to saved accounts
   useEffect(() => {
@@ -64,6 +85,11 @@ export default function ColabIntegration() {
   const isAuthenticated = (status === 'authenticated' || status === 'loading') && session?.user;
 
   const notebooks = {
+    'fast-sd-automatic1111': {
+      name: 'Fast Stable Diffusion (AUTOMATIC1111)',
+      url: 'https://colab.research.google.com/github/TheLastBen/fast-stable-diffusion/blob/main/fast_stable_diffusion_AUTOMATIC1111.ipynb',
+      description: 'Launch AUTOMATIC1111 Stable Diffusion in Colab'
+    },
     'dataset-maker': {
       name: 'Dataset Maker',
       url: 'https://colab.research.google.com/github/hollowstrawberry/kohya-colab/blob/main/Dataset_Maker.ipynb',
@@ -75,6 +101,17 @@ export default function ColabIntegration() {
       description: 'Train LoRA models for your characters'
     }
   };
+
+  const [modelLinks, setModelLinks] = useState({
+    'wai-160': {
+      name: 'waiIllustriousSDXL_v160.safetensors',
+      url: 'https://huggingface.co/Ine007/waiIllustriousSDXL_v160/resolve/main/waiIllustriousSDXL_v160.safetensors'
+    },
+    'wai-150': {
+      name: 'waiIllustriousSDXL_v150.safetensors',
+      url: 'https://huggingface.co/Ine007/waiIllustriousSDXL_v160/resolve/main/waiIllustriousSDXL_v150.safetensors'
+    }
+  });
 
   const testAccountId = () => {
     if (!testingAccount) return;
@@ -134,6 +171,54 @@ export default function ColabIntegration() {
     const notebook = notebooks[selectedNotebook as keyof typeof notebooks];
     const colabUrl = `${notebook.url}?authuser=${selectedAccount.accountId}`;
     window.open(colabUrl, '_blank');
+  };
+
+  const copyModelLink = async () => {
+    const model = modelLinks[selectedModel as keyof typeof modelLinks];
+    if (!model) return;
+    try {
+      await navigator.clipboard.writeText(model.url);
+    } catch (e) {
+      console.error('Failed to copy model link:', e);
+      alert('Copy failed. Please try again.');
+    }
+  };
+
+  const getModelNameFromUrl = (url: string) => {
+    try {
+      const parsed = new URL(url);
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      return parts[parts.length - 1] || url;
+    } catch {
+      const fallback = url.split('/').filter(Boolean).pop();
+      return fallback || url;
+    }
+  };
+
+  const addModelLink = () => {
+    const url = newModelUrl.trim();
+    if (!url) {
+      alert('Please enter a model URL.');
+      return;
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      alert('Please enter a valid URL starting with http or https.');
+      return;
+    }
+    const name = getModelNameFromUrl(url);
+    const keyBase = name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .slice(0, 40) || 'model';
+    const key = `${keyBase}-${Date.now()}`;
+    setModelLinks((prev) => ({
+      ...prev,
+      [key]: { name, url }
+    }));
+    setSelectedModel(key);
+    setNewModelUrl('');
+    setShowAddModel(false);
   };
 
   return (
@@ -271,6 +356,93 @@ export default function ColabIntegration() {
                 </label>
               ))}
             </div>
+          </div>
+
+          <div className="relative">
+            <div className="flex items-center gap-2">
+              {/* Models Toggle Button - Removed bottom border logic when open */}
+              <button
+                onClick={() => setShowModels((prev) => !prev)}
+                className={`flex-1 inline-flex items-center justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 hover:bg-slate-50 transition-colors ${showModels ? 'rounded-b-none border-b-0' : ''}`}
+                aria-expanded={showModels}
+              >
+                <span>Models</span>
+                <svg className={`w-4 h-4 text-slate-500 transition-transform ${showModels ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Add (+) Button - Stays independent with its own border */}
+              <button
+                onClick={() => setShowAddModel((prev) => !prev)}
+                className="inline-flex items-center justify-center rounded-lg bg-white border border-slate-200 w-10 h-10 text-xl font-light text-slate-600 hover:bg-slate-100 transition-colors"
+                title="Add model"
+              >
+                +
+              </button>
+            </div>
+
+            {/* Floating Dropdown Menu */}
+            {showModels && (
+              <div
+                ref={modelsDropdownRef}
+                className="absolute left-0 right-0 z-20 -mt-px max-h-60 overflow-y-auto overscroll-contain rounded-b-lg border border-t-0 border-slate-300 bg-white shadow-xl w-[calc(100%-48px)]"
+              >
+                {Object.entries(modelLinks).map(([key, model]) => (
+                  <div 
+                    key={key} 
+                    className="group flex items-center justify-between p-3 transition-colors cursor-pointer"
+                    onClick={async () => {
+                      setSelectedModel(key); // Track which one was clicked
+                      setCopiedModelKey(key);
+                      // Reset feedback color after 2 seconds
+                      setTimeout(() => setCopiedModelKey(null), 2000);
+                      // Close dropdown after 0.3 seconds
+                      setTimeout(() => setShowModels(false), 50);
+                      try {
+                        await navigator.clipboard.writeText(model.url);
+                      } catch (err) {
+                        console.error('Failed to copy:', err);
+                      }
+                    }}
+                  >
+                    <div className={`text-sm font-medium truncate transition-colors ${
+                      copiedModelKey === key 
+                        ? 'text-purple-600 underline' // Purple on Success with Underline
+                        : 'text-black hover:text-blue-600 hover:underline' // Default State: Black, Blue on Hover + Underline
+                    }`}>
+                      {model.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Model Input */}
+            {showAddModel && (
+              <div className="mt-2 flex items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 w-[calc(100%-48px)]">
+                <input
+                  type="url"
+                  value={newModelUrl}
+                  onChange={(e) => setNewModelUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      addModelLink();
+                    }
+                  }}
+                  placeholder="Paste model URL"
+                  className="flex-1 bg-transparent px-2 py-1 text-sm focus:outline-none"
+                />
+                <button
+                  onClick={() => setShowAddModel(false)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  title="Close"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+            )}
           </div>
 
           <div>
