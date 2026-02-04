@@ -113,7 +113,13 @@ export default function AnalyticsPage() {
                     </div>
 
                     <div className="grid gap-8 md:grid-cols-2">
-                        <StatusChart data={statusData} />
+                        {statusData.length > 0 ? (
+                            <StatusChart data={statusData} />
+                        ) : (
+                            <div className="flex items-center justify-center rounded-3xl border border-white/50 bg-white/60 p-6 shadow-sm backdrop-blur-sm h-[380px]">
+                                <p className="text-slate-500">No status data available</p>
+                            </div>
+                        )}
                         <WeeklyRequestsChart data={weeklyData} />
                     </div>
                 </>
