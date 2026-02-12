@@ -109,7 +109,11 @@ export default function ColabIntegration() {
     },
     'wai-150': {
       name: 'waiIllustriousSDXL_v150.safetensors',
-      url: 'https://huggingface.co/Ine007/waiIllustriousSDXL_v160/resolve/main/waiIllustriousSDXL_v150.safetensors'
+      url: 'https://huggingface.co/Ine007/waiIllustriousSDXL_v150/resolve/main/waiIllustriousSDXL_v150.safetensors'
+    },
+    'wai-140': {
+      name: 'waiIllustriousSDXL_v140.safetensors',
+      url: 'https://huggingface.co/Ine007/waiNSFWIllustrious_v140/resolve/main/waiNSFWIllustrious_v140.safetensors'
     }
   });
 
